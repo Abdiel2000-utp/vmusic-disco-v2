@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>V-Music Disco Edition</title>
+  <meta name="theme-color" content="#1db954">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #050505;
+      color: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+
+    @keyframes luces-discoteca {
+      0% { box-shadow: 0 0 25px #1db954; border-color: #1db954; }
+      33% { box-shadow: 0 0 25px #ff0055; border-color: #ff0055; }
+      66% { box-shadow: 0 0 25px #00e5ff; border-color: #00e5ff; }
+      100% { box-shadow: 0 0 25px #1db954; border-color: #1db954; }
+    }
+
+    @keyframes girar {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .reproductor {
+      background-color: #111111;
+      padding: 25px;
+      border-radius: 20px;
+      width: 320px;
+      border: 2px solid #1db954;
+      animation: luces-discoteca 5s infinite alternate;
+    }
+
+    h2 {
+      text-align: center;
+      background: linear-gradient(90deg, #1db954, #00e5ff, #ff0055);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0 0 15px 0;
+      font-size: 26px;
+    }
+
+    /* --- Disco de vinilo --- */
+    .disco-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 15px;
+    }
+
+    .disco {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at center, #050505 0 8px, #1a1a1a 8px 10px, #0a0a0a 10px 100%);
+      border: 3px solid #222;
+      position: relative;
+      animation: girar 4s linear infinite;
+      animation-play-state: paused;
+      box-shadow: 0 0 15px rgba(29, 185, 84, 0.4);
+    }
+
+    .disco.girando { animation-play-state: running; }
+
+    .disco::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 60%; height: 60%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      border: 1px solid #2a2a2a;
+    }
+
+    .disco::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 35%; height: 35%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      border: 1px solid #2a2a2a;
+    }
+
+    #nombre-cancion {
+      text-align: center;
+      font-size: 14px;
+      color: #e0e0e0;
+      margin-bottom: 2px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      padding: 0 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    #contador-pistas {
+      text-align: center;
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 15px;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-cargar {
+      display: block;
+      text-align: center;
+      background-color: #1a1a1a;
+      color: #fff;
+      border: 1px solid #333;
+      padding: 10px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-bottom: 20px;
+      transition: 0.3s;
+    }
+
+    .btn-cargar:hover {
+      background-color: #ff0055;
+      border-color: #ff0055;
+      box-shadow: 0 0 15px #ff0055;
+    }
+
+    input[type="file"] { display: none; }
+
+    .progreso-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 15px;
+      font-size: 12px;
+      color: #aaa;
+    }
+
+    input[type="range"] {
+      flex-grow: 1;
+      accent-color: #00e5ff;
+      cursor: pointer;
+      height: 4px;
+    }
+
+    .controles {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 12px;
+    }
+
+    .btn-control {
+      background-color: #222;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: 0.25s;
+    }
+
+    .btn-control svg { width: 18px; height: 18px; fill: currentColor; }
+
+    .btn-control:hover {
+      transform: scale(1.12);
+      background-color: #1db954;
+      box-shadow: 0 0 15px #1db954;
+    }
+
+    #btn-play {
+      width: 58px;
+      height: 58px;
+      background-color: #1db954;
+      color: #000;
+    }
+    #btn-play svg { width: 22px; height: 22px; }
+
+    #btn-play:hover {
+      background-color: #00e5ff;
+      box-shadow: 0 0 20px #00e5ff;
+      color: #000;
+    }
+
+    /* --- Fila secundaria: shuffle / repeat / volumen --- */
+    .fila-secundaria {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .btn-mini {
+      background: none;
+      border: 1px solid #2a2a2a;
+      color: #888;
+      border-radius: 16px;
+      width: 36px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: 0.25s;
+    }
+
+    .btn-mini svg { width: 15px; height: 15px; fill: currentColor; }
+
+    .btn-mini:hover { border-color: #555; color: #ccc; }
+
+    .btn-mini.activo {
+      color: #050505;
+      background-color: #00e5ff;
+      border-color: #00e5ff;
+      box-shadow: 0 0 10px #00e5ff;
+    }
+
+    .badge-uno {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: #ff0055;
+      color: #fff;
+      font-size: 9px;
+      font-weight: bold;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .volumen-container {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-grow: 1;
+    }
+
+    .volumen-container svg { width: 16px; height: 16px; fill: #888; flex-shrink: 0; cursor: pointer; }
+
+    .volumen-container input[type="range"] {
+      accent-color: #ff0055;
+    }
+
+    .playlist-container {
+      max-height: 140px;
+      overflow-y: auto;
+      background-color: #0a0a0a;
+      border-radius: 10px;
+      padding: 5px;
+      border: 1px solid #333;
+    }
+
+    ul { list-style: none; padding: 0; margin: 0; }
+
+    li {
+      padding: 10px 12px;
+      border-bottom: 1px solid #1a1a1a;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: 5px;
+      color: #bbb;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    li span.nombre-item {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    li:hover { background-color: #1a1a1a; color: #fff; }
+
+    li.activa {
+      color: #ff0055;
+      font-weight: bold;
+      background-color: #1a1a1a;
+      border-left: 4px solid #ff0055;
+    }
+
+    .ecualizador {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 12px;
+      flex-shrink: 0;
+    }
+    .ecualizador span {
+      width: 3px;
+      background: #ff0055;
+      border-radius: 1px;
+      animation: eq 0.8s ease-in-out infinite;
+    }
+    .ecualizador span:nth-child(1) { animation-delay: 0s; height: 4px; }
+    .ecualizador span:nth-child(2) { animation-delay: 0.2s; height: 10px; }
+    .ecualizador span:nth-child(3) { animation-delay: 0.4s; height: 6px; }
+
+    @keyframes eq {
+      0%, 100% { height: 3px; }
+      50% { height: 12px; }
+    }
+
+    audio { display: none; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+  </style>
+</head>
+<body>
+
+  <div class="reproductor">
+    <h2>🎵 V-Music Disco</h2>
+
+    <div class="disco-wrap">
+      <div class="disco" id="disco"></div>
+    </div>
+
+    <p id="nombre-cancion">Sube el volumen y carga tu música</p>
+    <p id="contador-pistas"></p>
+
+    <label for="archivo" class="btn-cargar">💿 Cargar Canciones</label>
+    <input type="file" id="archivo" accept="audio/*" multiple>
+
+    <div class="progreso-container">
+      <span id="tiempo-actual">0:00</span>
+      <input type="range" id="barra-progreso" value="0" step="1">
+      <span id="tiempo-total">0:00</span>
+    </div>
+
+    <div class="controles">
+      <button class="btn-control" id="btn-prev" title="Anterior" aria-label="Anterior">
+        <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+      </button>
+      <button class="btn-control" id="btn-play" title="Reproducir/Pausar" aria-label="Reproducir">
+        <svg id="icono-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <button class="btn-control" id="btn-next" title="Siguiente" aria-label="Siguiente">
+        <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6z"/></svg>
+      </button>
+    </div>
+
+    <div class="fila-secundaria">
+      <button class="btn-mini" id="btn-shuffle" title="Aleatorio" aria-label="Modo aleatorio">
+        <svg viewBox="0 0 24 24"><path d="M17 3l4 4-4 4v-3h-4.17l-2 2H4v-2h6.17l2-2H17V3zm4 14l-4 4v-3h-6.17l-2-2H4v-2h6.17l2 2H17v-3l4 4z"/></svg>
+      </button>
+      <button class="btn-mini" id="btn-repeat" title="Repetir" aria-label="Modo repetición">
+        <svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+        <span class="badge-uno" id="badge-repeat-uno" style="display:none;">1</span>
+      </button>
+      <div class="volumen-container">
+        <svg id="icono-volumen" viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+        <input type="range" id="barra-volumen" min="0" max="100" value="100">
+      </div>
+    </div>
+
+    <div class="playlist-container">
+      <ul id="lista-canciones"></ul>
+    </div>
+
+    <audio id="player"></audio>
+  </div>
+
+  <script>
+    const inputArchivo = document.getElementById('archivo');
+    const reproductor = document.getElementById('player');
+    const nombreCancion = document.getElementById('nombre-cancion');
+    const contadorPistas = document.getElementById('contador-pistas');
+    const listaCanciones = document.getElementById('lista-canciones');
+    const btnPlay = document.getElementById('btn-play');
+    const iconoPlay = document.getElementById('icono-play');
+    const btnNext = document.getElementById('btn-next');
+    const btnPrev = document.getElementById('btn-prev');
+    const disco = document.getElementById('disco');
+
+    const btnShuffle = document.getElementById('btn-shuffle');
+    const btnRepeat = document.getElementById('btn-repeat');
+    const badgeRepeatUno = document.getElementById('badge-repeat-uno');
+    const barraVolumen = document.getElementById('barra-volumen');
+    const iconoVolumen = document.getElementById('icono-volumen');
+
+    const barraProgreso = document.getElementById('barra-progreso');
+    const tiempoActualTexto = document.getElementById('tiempo-actual');
+    const tiempoTotalTexto = document.getElementById('tiempo-total');
+
+    let canciones = [];
+    let indiceActual = 0;
+    let orden = [];        // orden de reproducción (array de índices)
+    let posicionOrden = 0; // posición dentro de "orden"
+
+    let shuffleActivo = false;
+    let repeatModo = 0; // 0 = off, 1 = repetir lista, 2 = repetir una
+
+    const ICONOS_PLAY = '<path d="M8 5v14l11-7z"/>';
+    const ICONOS_PAUSA = '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>';
+
+    function formatearTiempo(segundos) {
+      if (isNaN(segundos)) return "0:00";
+      const min = Math.floor(segundos / 60);
+      const seg = Math.floor(segundos % 60);
+      return min + ":" + (seg < 10 ? "0" + seg : seg);
+    }
+
+    // ---------- ORDEN / SHUFFLE ----------
+    function generarOrdenSecuencial() {
+      orden = canciones.map((_, i) => i);
+    }
+
+    function mezclarOrden() {
+      for (let i = orden.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [orden[i], orden[j]] = [orden[j], orden[i]];
+      }
+    }
+
+    btnShuffle.addEventListener('click', () => {
+      if (canciones.length === 0) return;
+      shuffleActivo = !shuffleActivo;
+      btnShuffle.classList.toggle('activo', shuffleActivo);
+
+      if (shuffleActivo) {
+        mezclarOrden();
+      } else {
+        generarOrdenSecuencial();
+      }
+      posicionOrden = orden.indexOf(indiceActual);
+    });
+
+    btnRepeat.addEventListener('click', () => {
+      repeatModo = (repeatModo + 1) % 3;
+      btnRepeat.classList.toggle('activo', repeatModo !== 0);
+      badgeRepeatUno.style.display = repeatModo === 2 ? 'flex' : 'none';
+      btnRepeat.title = repeatModo === 0 ? 'Repetir' : (repeatModo === 1 ? 'Repetir lista' : 'Repetir canción');
+    });
+
+    // ---------- VOLUMEN ----------
+    barraVolumen.addEventListener('input', () => {
+      reproductor.volume = barraVolumen.value / 100;
+      actualizarIconoVolumen();
+    });
+
+    iconoVolumen.addEventListener('click', () => {
+      if (reproductor.volume > 0) {
+        iconoVolumen.dataset.prevVol = barraVolumen.value;
+        barraVolumen.value = 0;
+      } else {
+        barraVolumen.value = iconoVolumen.dataset.prevVol || 100;
+      }
+      reproductor.volume = barraVolumen.value / 100;
+      actualizarIconoVolumen();
+    });
+
+    function actualizarIconoVolumen() {
+      const v = reproductor.volume;
+      let path;
+      if (v === 0) {
+        path = '<path d="M16.5 12A4.5 4.5 0 0 0 14 7.97v2.21l2.45 2.45c.03-.2.05-.42.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51A8.796 8.796 0 0 0 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06a8.99 8.99 0 0 0 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>';
+      } else if (v < 0.5) {
+        path = '<path d="M7 9v6h4l5 5V4l-5 5H7z"/>';
+      } else {
+        path = '<path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+      }
+      iconoVolumen.innerHTML = path;
+    }
+
+    // ---------- MEDIA SESSION (con artwork local, sin parpadeo) ----------
+    let artworkFijo = null;
+
+    function generarArtworkLocal() {
+      // Se dibuja UNA sola vez en un canvas y se reutiliza siempre la misma
+      // imagen (misma cadena de datos) para que el sistema operativo no
+      // tenga que descargar nada por red al cambiar de canción: eso es
+      // lo que provocaba el parpadeo del widget de bloqueo.
+      const size = 512;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      const grad = ctx.createLinearGradient(0, 0, size, size);
+      grad.addColorStop(0, '#1db954');
+      grad.addColorStop(0.5, '#00e5ff');
+      grad.addColorStop(1, '#ff0055');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, size, size);
+
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size / 2.6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 220px Segoe UI, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('♪', size / 2, size / 2 + 10);
+
+      const dataUrl = canvas.toDataURL('image/png');
+      artworkFijo = [{ src: dataUrl, sizes: '512x512', type: 'image/png' }];
+    }
+
+    if ('mediaSession' in navigator) {
+      generarArtworkLocal();
+
+      navigator.mediaSession.setActionHandler('play', () => {
+        reproductor.play();
+      });
+      navigator.mediaSession.setActionHandler('pause', () => {
+        reproductor.pause();
+      });
+      navigator.mediaSession.setActionHandler('previoustrack', () => btnPrev.click());
+      navigator.mediaSession.setActionHandler('nexttrack', () => btnNext.click());
+      try {
+        navigator.mediaSession.setActionHandler('seekto', (details) => {
+          if (details.seekTime !== undefined) {
+            reproductor.currentTime = details.seekTime;
+          }
+        });
+      } catch (e) { /* algunos navegadores no lo soportan */ }
+    }
+
+    function actualizarMetadatos(archivo) {
+      if (!('mediaSession' in navigator)) return;
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: archivo.name.replace(/\.[^/.]+$/, ""),
+        artist: 'V-Music Disco',
+        album: 'V-Music Disco Edition',
+        artwork: artworkFijo
+      });
+    }
+
+    reproductor.addEventListener('loadedmetadata', () => {
+      barraProgreso.max = reproductor.duration;
+      tiempoTotalTexto.textContent = formatearTiempo(reproductor.duration);
+      if ('mediaSession' in navigator) {
+        try {
+          navigator.mediaSession.setPositionState({
+            duration: reproductor.duration || 0,
+            playbackRate: 1,
+            position: 0
+          });
+        } catch (e) {}
+      }
+    });
+
+    reproductor.addEventListener('timeupdate', () => {
+      barraProgreso.value = reproductor.currentTime;
+      tiempoActualTexto.textContent = formatearTiempo(reproductor.currentTime);
+      if ('mediaSession' in navigator && !isNaN(reproductor.duration)) {
+        try {
+          navigator.mediaSession.setPositionState({
+            duration: reproductor.duration,
+            playbackRate: 1,
+            position: reproductor.currentTime
+          });
+        } catch (e) {}
+      }
+    });
+
+    // ---------- CARGA DE ARCHIVOS ----------
+    inputArchivo.addEventListener('change', function (e) {
+      canciones = Array.from(e.target.files);
+      if (canciones.length > 0) {
+        generarOrdenSecuencial();
+        shuffleActivo = false;
+        btnShuffle.classList.remove('activo');
+        posicionOrden = 0;
+        renderizarLista();
+        reproducirCancion(0);
+      }
+    });
+
+    function renderizarLista() {
+      listaCanciones.innerHTML = '';
+      canciones.forEach((archivo, i) => {
+        let li = document.createElement('li');
+        let nombre = document.createElement('span');
+        nombre.className = 'nombre-item';
+        nombre.textContent = archivo.name;
+        li.appendChild(nombre);
+
+        if (i === indiceActual) {
+          li.classList.add('activa');
+          if (!reproductor.paused) {
+            const eq = document.createElement('div');
+            eq.className = 'ecualizador';
+            eq.innerHTML = '<span></span><span></span><span></span>';
+            li.appendChild(eq);
+          }
+        }
+        li.onclick = () => {
+          indiceActual = i;
+          posicionOrden = orden.indexOf(i);
+          reproducirCancion(i);
+        };
+        listaCanciones.appendChild(li);
+      });
+    }
+
+    function actualizarContador() {
+      if (canciones.length === 0) {
+        contadorPistas.textContent = '';
+      } else {
+        contadorPistas.textContent = `Pista ${indiceActual + 1} de ${canciones.length}`;
+      }
+    }
+
+    function reproducirCancion(indice) {
+      indiceActual = indice;
+      const archivo = canciones[indiceActual];
+      nombreCancion.textContent = archivo.name;
+      reproductor.src = URL.createObjectURL(archivo);
+      reproductor.play();
+      actualizarEstadoPlay(true);
+      renderizarLista();
+      actualizarContador();
+      actualizarMetadatos(archivo);
+    }
+
+    function actualizarEstadoPlay(reproduciendo) {
+      iconoPlay.innerHTML = reproduciendo ? ICONOS_PAUSA : ICONOS_PLAY;
+      disco.classList.toggle('girando', reproduciendo);
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = reproduciendo ? 'playing' : 'paused';
+      }
+    }
+
+    btnPlay.addEventListener('click', () => {
+      if (canciones.length === 0) return;
+      if (reproductor.paused) {
+        reproductor.play();
+        actualizarEstadoPlay(true);
+      } else {
+        reproductor.pause();
+        actualizarEstadoPlay(false);
+      }
+      renderizarLista();
+    });
+
+    // ---------- NAVEGACIÓN (siguiente / anterior) ----------
+    function avanzar() {
+      if (orden.length === 0) return;
+      posicionOrden = (posicionOrden + 1) % orden.length;
+      indiceActual = orden[posicionOrden];
+      reproducirCancion(indiceActual);
+    }
+
+    function retroceder() {
+      if (orden.length === 0) return;
+      posicionOrden = (posicionOrden - 1 + orden.length) % orden.length;
+      indiceActual = orden[posicionOrden];
+      reproducirCancion(indiceActual);
+    }
+
+    btnNext.addEventListener('click', () => {
+      if (canciones.length === 0) return;
+      avanzar();
+    });
+
+    btnPrev.addEventListener('click', () => {
+      if (canciones.length === 0) return;
+      retroceder();
+    });
+
+    // ---------- FIN DE CANCIÓN ----------
+    reproductor.addEventListener('ended', () => {
+      if (canciones.length === 0) return;
+
+      if (repeatModo === 2) {
+        // Repetir la misma canción
+        reproductor.currentTime = 0;
+        reproductor.play();
+        return;
+      }
+
+      posicionOrden++;
+      if (posicionOrden >= orden.length) {
+        if (repeatModo === 1) {
+          // Repetir lista completa
+          posicionOrden = 0;
+          if (shuffleActivo) mezclarOrden();
+        } else {
+          // Sin repetición: se detiene al terminar la última canción
+          posicionOrden = orden.length - 1;
+          actualizarEstadoPlay(false);
+          renderizarLista();
+          return;
+        }
+      }
+      indiceActual = orden[posicionOrden];
+      reproducirCancion(indiceActual);
+    });
+
+    // ---------- BARRA DE PROGRESO ----------
+    barraProgreso.addEventListener('input', () => {
+      reproductor.currentTime = barraProgreso.value;
+    });
+
+    // ---------- ATAJOS DE TECLADO ----------
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT') return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        btnPlay.click();
+      } else if (e.code === 'ArrowRight') {
+        btnNext.click();
+      } else if (e.code === 'ArrowLeft') {
+        btnPrev.click();
+      }
+    });
+
+    // Estado inicial del volumen
+    reproductor.volume = 1;
+    actualizarIconoVolumen();
+
+    // Registrar el service worker (necesario para que la app sea instalable / PWA)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js').catch((err) => {
+          console.warn('No se pudo registrar el service worker:', err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
